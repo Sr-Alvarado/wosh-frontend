@@ -1287,11 +1287,11 @@
             copyLink(shortUrl);
         }
 
-        function copyLink(url, e) {
+        function copyLink(url, clickEvent) {
             navigator.clipboard.writeText(url).then(() => {
                 const t = translations[currentLang];
                 // Mostrar feedback visual
-                const btn = e ? e.target.closest('button') : event.target.closest('button');
+                const btn = clickEvent.target.closest('button');
                 const originalText = btn.innerHTML;
                 btn.innerHTML = `<i class="fas fa-check"></i> ${t.copied}`;
                 btn.style.background = 'var(--success)';
