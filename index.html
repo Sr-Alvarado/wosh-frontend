@@ -1138,6 +1138,7 @@
 
                 if (response.ok) {
                     const links = await response.json();
+                    console.log('Public links received:', links.length, links);
                     renderLinks(links, 'public-links', true);
                 } else {
                     const t = translations[currentLang];
