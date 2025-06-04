@@ -1290,8 +1290,8 @@
         function copyLink(url, clickEvent) {
             navigator.clipboard.writeText(url).then(() => {
                 const t = translations[currentLang];
-                // Mostrar feedback visual
-                const btn = clickEvent.target.closest('button');
+                // Usar clickEvent si existe, sino event global
+                const btn = (clickEvent || event).target.closest('button');
                 const originalText = btn.innerHTML;
                 btn.innerHTML = `<i class="fas fa-check"></i> ${t.copied}`;
                 btn.style.background = 'var(--success)';
