@@ -436,6 +436,21 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        .beta-banner {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            text-align: center;
+            padding: 12px 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            position: relative;
+            z-index: 1000;
+        }
+
+        .beta-banner i {
+            margin-right: 8px;
+        }
+
         .links-grid {
             display: grid;
             gap: 16px;
@@ -743,6 +758,10 @@
     </style>
 </head>
 <body>
+    <div class="beta-banner">
+        <i class="fas fa-flask"></i>
+        Esta página está en BETA - Siéntete libre de probarla, pero tus enlaces podrían desaparecer
+    </div>
     <div class="lang-switcher">
         <a href="#" class="lang-btn active" onclick="setLanguage('es')">🇪🇸 ES</a>
         <a href="#" class="lang-btn" onclick="setLanguage('en')">🇺🇸 EN</a>
