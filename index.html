@@ -991,7 +991,7 @@
 
             translatePage();
             await initClerk();
-            setTimeout(() => loadPublicLinks(), 1000);
+            await loadPublicLinks();
             updateStats();
         }
 
