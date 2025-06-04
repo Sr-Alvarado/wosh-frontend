@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>wosh.cc - Acortador de URLs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #7928CA 0%, #FF0080 100%);
+            --primary-shadow: rgba(121, 40, 202, 0.3);
+            --background: #000000;
+            --surface: #111111;
+            --surface-alt: #1a1a1a;
+            --surface-hover: #222222;
+            --border: #333333;
+            --border-hover: #444444;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --text-muted: #888888;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
+            --shadow-primary: 0 8px 25px var(--primary-shadow);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: var(--background);
+            min-height: 100vh;
+            color: var(--text-primary);
+            font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+            position: relative;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            color: var(--text-primary);
+            margin-bottom: 48px;
+            padding: 32px 0;
+        }
+
+        .header h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        .header .wosh {
+            color: var(--text-primary);
+        }
+
+        .header .cc {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            opacity: 0.8;
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto;
+            color: var(--text-secondary);
+        }
+
+        .lang-switcher {
+            position: absolute;
+            top: 32px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .lang-btn {
+            padding: 8px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .lang-btn:hover,
+        .lang-btn.active {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        .main-card {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            padding: clamp(24px, 4vw, 48px);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 32px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .main-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--primary-gradient);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        }
+
+        .auth-section {
+            background: var(--surface-alt);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            margin-bottom: 32px;
+            border: 1px solid var(--border);
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .user-welcome {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-welcome i {
+            font-size: 1.5rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .shortener-form {
+            display: grid;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            z-index: 2;
+            font-size: 1.125rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius-md);
+            padding: 1px;
+            background: var(--border);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: xor;
+            transition: all 0.3s ease;
+        }
+
+        .input-wrapper:focus-within::before {
+            background: var(--primary-gradient);
+        }
+
+        input[type="url"], input[type="text"] {
+            width: 100%;
+            padding: 16px 16px 16px 48px;
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 400;
+            transition: all 0.3s ease;
+            background: var(--surface-alt);
+            color: var(--text-primary);
+            position: relative;
+            z-index: 1;
+        }
+
+        input::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        input:focus {
+            outline: none;
+            background: var(--surface-hover);
+            box-shadow: 0 0 0 4px rgba(121, 40, 202, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 16px 32px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            flex: 1;
+            min-width: 200px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-primary);
+        }
+
+        .btn-primary:hover::before {
+            opacity: 1;
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--surface-alt);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+            font-weight: 500;
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-1px);
+        }
+
+        .result {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            color: white;
+            padding: 28px;
+            border-radius: var(--radius-lg);
+            margin-top: 24px;
+            display: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            transform: translateX(-100%);
+            animation: shimmer 2s ease-in-out;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+
+        .result-url {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255,255,255,0.15);
+            padding: 16px;
+            border-radius: var(--radius-md);
+            backdrop-filter: blur(10px);
+        }
+
+        .result-url a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            flex: 1;
+            word-break: break-all;
+            font-size: 1.125rem;
+        }
+
+        .copy-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.3);
+            min-width: auto;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--surface-alt);
+            border-radius: var(--radius-md);
+            margin-bottom: 32px;
+            padding: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 16px 20px;
+            text-align: center;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            position: relative;
+        }
+
+        .tab.active {
+            background: var(--surface);
+            color: var(--text-primary);
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-1px);
+        }
+
+        .tab.active::before {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            background: var(--primary-gradient);
+            border-radius: 1px;
+        }
+
+        .tab:hover:not(.active) {
+            color: var(--text-primary);
+            background: var(--surface-hover);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .links-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .link-item {
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .link-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary-gradient);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+            transform-origin: left;
+        }
+
+        .link-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--border-hover);
+            background: var(--surface-hover);
+        }
+
+        .link-item:hover::before {
+            transform: scaleX(1);
+        }
+
+        .link-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 16px;
+        }
+
+        .link-short {
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+            font-size: 1.125rem;
+            word-break: break-all;
+            flex: 1;
+        }
+
+        .link-short:hover {
+            text-decoration: underline;
+        }
+
+        .link-original {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 12px;
+            word-break: break-all;
+            line-height: 1.5;
+        }
+
+        .link-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .link-meta i {
+            margin-right: 6px;
+        }
+
+        .public-badge {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #d97706;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 1px solid #fed7aa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .private-badge {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            color: #16a34a;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 1px solid #a7f3d0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 48px;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 12px;
+            font-size: 1.25rem;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 3.5rem;
+            margin-bottom: 24px;
+            opacity: 0.6;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .empty-state p {
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-item {
+            background: var(--surface-alt);
+            padding: 16px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px 20px;
+            margin-top: 24px;
+        }
+
+        .footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .footer a:hover {
+            color: var(--text-primary);
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+
+            .header {
+                margin-bottom: 32px;
+                padding: 24px 0;
+            }
+
+            .main-card {
+                padding: 24px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn-primary {
+                min-width: auto;
+            }
+
+            .result-url {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .user-info {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+
+            .link-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .link-meta {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+
+            .stats-bar {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .lang-switcher {
+                position: static;
+                justify-content: center;
+                margin-bottom: 24px;
+                margin-top: 16px;
+            }
+        }
+
+        /* Animación de contador */
+        @keyframes countUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .stat-number {
+            animation: countUp 0.6s ease-out;
+        }
+
+        /* Focus states para accesibilidad */
+        button:focus-visible,
+        input:focus-visible,
+        .lang-btn:focus-visible {
+            outline: 2px solid #7928CA;
+            outline-offset: 2px;
+        }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Mejores transiciones para dispositivos que prefieren menos movimiento */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lang-switcher">
+        <a href="#" class="lang-btn active" onclick="setLanguage('es')">🇪🇸 ES</a>
+        <a href="#" class="lang-btn" onclick="setLanguage('en')">🇺🇸 EN</a>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-link"></i> <span class="wosh">wosh</span><span class="cc">.cc</span></h1>
+            <p data-translate="header_subtitle">El acortador de URLs más rápido y elegante del mundo</p>
+        </div>
+
+        <div class="main-card">
+            <!-- Estadísticas -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-number" id="total-links">0</div>
+                    <div class="stat-label" data-translate="stat_total">Enlaces Totales</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="public-links-count">0</div>
+                    <div class="stat-label" data-translate="stat_public">Enlaces Públicos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="private-links-count">0</div>
+                    <div class="stat-label" data-translate="stat_private">Enlaces Privados</div>
+                </div>
+            </div>
+
+            <!-- Sección de autenticación -->
+            <div class="auth-section">
+                <div id="signed-out">
+                    <h3><i class="fas fa-magic"></i> <span data-translate="auth_title">¿Quieres súper poderes?</span></h3>
+                    <p style="margin: 16px 0; color: var(--text-secondary); line-height: 1.6;" data-translate="auth_description">
+                        Crea códigos personalizados, gestiona tus enlaces y obtén estadísticas detalladas
+                    </p>
+                    <div id="sign-in"></div>
+                </div>
+
+                <div id="signed-in" style="display: none;">
+                    <div class="user-info">
+                        <div class="user-welcome">
+                            <i class="fas fa-crown"></i>
+                            <span data-translate="welcome_user">¡Hola, <span id="user-name"></span>!</span>
+                        </div>
+                        <button class="btn-secondary" onclick="signOut()">
+                            <i class="fas fa-sign-out-alt"></i> <span data-translate="sign_out">Cerrar sesión</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario principal -->
+            <div class="shortener-form">
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <i class="fas fa-globe"></i>
+                        <input type="url" id="urlInput" data-translate-placeholder="url_placeholder">
+                    </div>
+                </div>
+
+                <div id="custom-code-section" style="display: none;">
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <i class="fas fa-magic"></i>
+                            <input type="text" id="customCode" data-translate-placeholder="custom_code_placeholder">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="shortenUrl()">
+                        <i class="fas fa-rocket"></i> <span data-translate="shorten_btn">Acortar URL</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="result" class="result">
+                <div class="result-header">
+                    <i class="fas fa-check-circle"></i>
+                    <span data-translate="success_message">¡URL acortada exitosamente!</span>
+                </div>
+                <div class="result-url">
+                    <a id="shortLink" href="" target="_blank"></a>
+                    <button class="copy-btn" onclick="copyToClipboard()">
+                        <i class="fas fa-copy"></i> <span data-translate="copy_btn">Copiar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs para enlaces -->
+        <div class="main-card">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('public')">
+                    <i class="fas fa-globe"></i> <span data-translate="public_links_tab">Enlaces Públicos</span>
+                </div>
+                <div class="tab" id="private-tab" onclick="switchTab('private')" style="display: none;">
+                    <i class="fas fa-shield-alt"></i> <span data-translate="my_links_tab">Mis Enlaces</span>
+                </div>
+            </div>
+
+            <div id="public-content" class="tab-content active">
+                <div id="public-loading" class="loading">
+                    <i class="fas fa-spinner spinner"></i> <span data-translate="loading_public">Cargando enlaces públicos...</span>
+                </div>
+                <div id="public-links" class="links-grid"></div>
+            </div>
+
+            <div id="private-content" class="tab-content">
+                <div style="margin-bottom: 24px;">
+                    <button class="btn-primary" onclick="loadMyLinks()" style="width: auto;">
+                        <i class="fas fa-sync-alt"></i> <span data-translate="refresh_links">Actualizar mis enlaces</span>
+                    </button>
+                </div>
+                <div id="my-links" class="links-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <a href="https://mrchasp.com/es" target="_blank">
+            <i class="fas fa-code"></i> Powered by MrChasp
+        </a>
+    </div>
+
+    <script>
+        // Sistema de traducción
+        const translations = {
+            es: {
+                header_subtitle: "El acortador de URLs más rápido y elegante del mundo",
+                stat_total: "Enlaces Totales",
+                stat_public: "Enlaces Públicos",
+                stat_private: "Enlaces Privados",
+                auth_title: "¿Quieres súper poderes?",
+                auth_description: "Crea códigos personalizados, gestiona tus enlaces y obtén estadísticas detalladas",
+                welcome_user: "¡Hola, ",
+                sign_out: "Cerrar sesión",
+                url_placeholder: "https://ejemplo.com/tu-url-muy-larga-aqui",
+                custom_code_placeholder: "mi-codigo-personalizado (opcional)",
+                shorten_btn: "Acortar URL",
+                success_message: "¡URL acortada exitosamente!",
+                copy_btn: "Copiar",
+                public_links_tab: "Enlaces Públicos",
+                my_links_tab: "Mis Enlaces",
+                loading_public: "Cargando enlaces públicos...",
+                refresh_links: "Actualizar mis enlaces",
+                public_badge: "Público",
+                private_badge: "Privado",
+                empty_public: "Aún no hay enlaces públicos",
+                empty_private: "No tienes enlaces guardados",
+                error_connection: "Error de conexión",
+                error_loading: "Error al cargar enlaces",
+                copied: "¡Copiado!"
+            },
+            en: {
+                header_subtitle: "The fastest and most elegant URL shortener in the world",
+                stat_total: "Total Links",
+                stat_public: "Public Links",
+                stat_private: "Private Links",
+                auth_title: "Want super powers?",
+                auth_description: "Create custom codes, manage your links and get detailed statistics",
+                welcome_user: "Hello, ",
+                sign_out: "Sign out",
+                url_placeholder: "https://example.com/your-very-long-url-here",
+                custom_code_placeholder: "my-custom-code (optional)",
+                shorten_btn: "Shorten URL",
+                success_message: "URL shortened successfully!",
+                copy_btn: "Copy",
+                public_links_tab: "Public Links",
+                my_links_tab: "My Links",
+                loading_public: "Loading public links...",
+                refresh_links: "Refresh my links",
+                public_badge: "Public",
+                private_badge: "Private",
+                empty_public: "No public links yet",
+                empty_private: "You have no saved links",
+                error_connection: "Connection error",
+                error_loading: "Error loading links",
+                copied: "Copied!"
+            }
+        };
+
+        let currentLang = 'es';
+        let clerk;
+        let isAuthenticated = false;
+
+        const CLERK_PUBLISHABLE_KEY = 'pk_live_Y2xlcmsud29zaC5jYyQ';
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8787' : 'https://wosh.cc';
+
+        // Sistema de traducción
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('wosh_lang', lang);
+
+            // Actualizar botones de idioma
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Actualizar HTML lang
+            document.documentElement.lang = lang;
+
+            // Traducir textos
+            translatePage();
+        }
+
+        function translatePage() {
+            const t = translations[currentLang];
+
+            // Traducir elementos con data-translate
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                const key = el.getAttribute('data-translate');
+                if (t[key]) {
+                    if (key === 'welcome_user' && isAuthenticated) {
+                        const userName = clerk.user.firstName || clerk.user.emailAddresses[0].emailAddress;
+                        el.innerHTML = t[key] + userName + '!';
+                    } else {
+                        el.textContent = t[key];
+                    }
+                }
+            });
+
+            // Traducir placeholders
+            document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-translate-placeholder');
+                if (t[key]) {
+                    el.placeholder = t[key];
+                }
+            });
+        }
+
+        // Inicializar aplicación
+        async function initApp() {
+            // Cargar idioma guardado
+            const savedLang = localStorage.getItem('wosh_lang') || 'es';
+            if (savedLang !== currentLang) {
+                currentLang = savedLang;
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.onclick.toString().includes(savedLang)) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+
+            translatePage();
+            await initClerk();
+            await loadPublicLinks();
+            updateStats();
+        }
+
+        // Inicializar Clerk
+        async function initClerk() {
+            try {
+                clerk = new window.Clerk(CLERK_PUBLISHABLE_KEY);
+                await clerk.load();
+
+                if (clerk.user) {
+                    showSignedIn();
+                } else {
+                    showSignedOut();
+                }
+
+                clerk.addListener(({ user }) => {
+                    if (user) {
+                        showSignedIn();
+                    } else {
+                        showSignedOut();
+                    }
+                });
+            } catch (error) {
+                console.error('Error initializing Clerk:', error);
+                document.getElementById('signed-out').innerHTML = '<h3><i class="fas fa-exclamation-triangle"></i> Error: No se pudo cargar la autenticación</h3>';
+            }
+        }
+
+        function showSignedIn() {
+            isAuthenticated = true;
+            document.getElementById('signed-out').style.display = 'none';
+            document.getElementById('signed-in').style.display = 'block';
+            document.getElementById('custom-code-section').style.display = 'block';
+            document.getElementById('private-tab').style.display = 'block';
+
+            const userName = clerk.user.firstName || clerk.user.emailAddresses[0].emailAddress;
+            const welcomeEl = document.querySelector('[data-translate="welcome_user"]');
+            if (welcomeEl) {
+                const t = translations[currentLang];
+                welcomeEl.innerHTML = t.welcome_user + userName + '!';
+            }
+
+            updateStats();
+        }
+
+        function showSignedOut() {
+            isAuthenticated = false;
+            document.getElementById('signed-out').style.display = 'block';
+            document.getElementById('signed-in').style.display = 'none';
+            document.getElementById('custom-code-section').style.display = 'none';
+            document.getElementById('private-tab').style.display = 'none';
+
+            if (clerk) {
+                clerk.mountSignIn(document.getElementById('sign-in'));
+            }
+
+            // Volver a tab público si estaba en privado
+            if (document.querySelector('.tab-content.active').id === 'private-content') {
+                switchTab('public');
+            }
+
+            updateStats();
+        }
+
+        async function signOut() {
+            await clerk.signOut();
+        }
+
+        // Acortar URL
+        async function shortenUrl() {
+            const longUrl = document.getElementById('urlInput').value;
+            const customCode = document.getElementById('customCode').value;
+
+            if (!longUrl) {
+                alert(currentLang === 'es' ? 'Por favor, ingresa una URL' : 'Please enter a URL');
+                return;
+            }
+
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' +
+                (currentLang === 'es' ? 'Procesando...' : 'Processing...');
+            button.disabled = true;
+
+            try {
+                const body = { longUrl };
+
+                // Solo agregar código personalizado si está autenticado
+                if (customCode && isAuthenticated) {
+                    body.customCode = customCode;
+                }
+
+                const headers = { 'Content-Type': 'application/json' };
+
+                // Solo agregar token si está autenticado
+                if (isAuthenticated && clerk.session) {
+                    const token = await clerk.session.getToken();
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch(`${API_BASE}/api/shorten`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(body)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('shortLink').href = data.shortUrl;
+                    document.getElementById('shortLink').textContent = data.shortUrl;
+                    document.getElementById('result').style.display = 'block';
+                    document.getElementById('urlInput').value = '';
+                    document.getElementById('customCode').value = '';
+
+                    // Scroll suave al resultado
+                    document.getElementById('result').scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+
+                    // Actualizar listas y estadísticas
+                    await loadPublicLinks();
+                    if (isAuthenticated) {
+                        await loadMyLinks();
+                    }
+                    updateStats();
+                } else {
+                    const error = await response.text();
+                    alert((currentLang === 'es' ? 'Error: ' : 'Error: ') + error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert(currentLang === 'es' ? 'Error al acortar URL' : 'Error shortening URL');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // Cargar enlaces públicos
+        async function loadPublicLinks() {
+            try {
+                const response = await fetch(`${API_BASE}/api/public-links`);
+
+                if (response.ok) {
+                    const links = await response.json();
+                    renderLinks(links, 'public-links', true);
+                } else {
+                    const t = translations[currentLang];
+                    document.getElementById('public-links').innerHTML =
+                        `<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>${t.error_loading}</p></div>`;
+                }
+            } catch (error) {
+                console.error('Error loading public links:', error);
+                const t = translations[currentLang];
+                document.getElementById('public-links').innerHTML =
+                    `<div class="empty-state"><i class="fas fa-wifi"></i><p>${t.error_connection}</p></div>`;
+            } finally {
+                document.getElementById('public-loading').style.display = 'none';
+            }
+        }
+
+        // Cargar mis enlaces
+        async function loadMyLinks() {
+            if (!isAuthenticated) return;
+
+            try {
+                const token = await clerk.session.getToken();
+                const response = await fetch(`${API_BASE}/api/my-links`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const links = await response.json();
+                    renderLinks(links, 'my-links', false);
+                } else {
+                    const t = translations[currentLang];
+                    document.getElementById('my-links').innerHTML =
+                        `<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>${t.error_loading}</p></div>`;
+                }
+            } catch (error) {
+                console.error('Error loading my links:', error);
+                const t = translations[currentLang];
+                document.getElementById('my-links').innerHTML =
+                    `<div class="empty-state"><i class="fas fa-wifi"></i><p>${t.error_connection}</p></div>`;
+            }
+        }
+
+        // Renderizar enlaces
+        function renderLinks(links, containerId, isPublic) {
+            const container = document.getElementById(containerId);
+            const t = translations[currentLang];
+
+            if (links.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-link"></i>
+                        <p>${isPublic ? t.empty_public : t.empty_private}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const linksHtml = links.map(link => `
+                <div class="link-item">
+                    <div class="link-header">
+                        <a href="${link.shortUrl}" target="_blank" class="link-short">
+                            ${link.shortUrl}
+                        </a>
+                        <span class="${isPublic ? 'public-badge' : 'private-badge'}">
+                            <i class="fas fa-${isPublic ? 'globe' : 'shield-alt'}"></i>
+                            ${isPublic ? t.public_badge : t.private_badge}
+                        </span>
+                    </div>
+                    <div class="link-original">${link.longUrl}</div>
+                    <div class="link-meta">
+                        <span><i class="fas fa-calendar"></i> ${new Date(link.createdAt).toLocaleDateString(currentLang === 'es' ? 'es' : 'en')}</span>
+                        <button class="copy-btn" onclick="copyLink('${link.shortUrl}')" style="padding: 6px 12px; font-size: 0.8rem;">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = linksHtml;
+        }
+
+        // Actualizar estadísticas con efecto contador
+        function updateStats() {
+            const publicLinks = document.querySelectorAll('#public-links .link-item').length;
+            const privateLinks = document.querySelectorAll('#my-links .link-item').length;
+            const total = publicLinks + (isAuthenticated ? privateLinks : 0);
+
+            // Efecto contador animado
+            animateCounter('total-links', total);
+            animateCounter('public-links-count', publicLinks);
+
+            if (isAuthenticated) {
+                animateCounter('private-links-count', privateLinks);
+            } else {
+                document.getElementById('private-links-count').textContent = '—';
+            }
+        }
+
+        // Función para animar contadores
+        function animateCounter(elementId, targetValue) {
+            const element = document.getElementById(elementId);
+            const currentValue = parseInt(element.textContent) || 0;
+
+            if (currentValue === targetValue) return;
+
+            const increment = targetValue > currentValue ? 1 : -1;
+            const duration = Math.abs(targetValue - currentValue) * 50; // 50ms por unidad
+            const steps = Math.abs(targetValue - currentValue);
+            const stepDuration = Math.min(duration / steps, 100); // Max 100ms por paso
+
+            let current = currentValue;
+
+            const timer = setInterval(() => {
+                current += increment;
+                element.textContent = current;
+                element.style.animation = 'countUp 0.3s ease-out';
+
+                if (current === targetValue) {
+                    clearInterval(timer);
+                    // Remover animación después de completar
+                    setTimeout(() => {
+                        element.style.animation = '';
+                    }, 300);
+                }
+            }, stepDuration);
+        }
+
+        // Cambiar entre tabs
+        function switchTab(tabName) {
+            // Actualizar tabs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // Activar tab seleccionado
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-content`).classList.add('active');
+
+            // Cargar contenido si es necesario
+            if (tabName === 'private' && isAuthenticated) {
+                loadMyLinks();
+            }
+        }
+
+        // Copiar enlace
+        function copyToClipboard() {
+            const shortUrl = document.getElementById('shortLink').textContent;
+            copyLink(shortUrl);
+        }
+
+        function copyLink(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                const t = translations[currentLang];
+                // Mostrar feedback visual
+                const btn = event.target.closest('button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = `<i class="fas fa-check"></i> ${t.copied}`;
+                btn.style.background = 'var(--success)';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            });
+        }
+
+        // Inicializar cuando cargue la página
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        // Auto-refresh de enlaces públicos cada 30 segundos
+        setInterval(() => {
+            loadPublicLinks();
+            updateStats();
+        }, 30000);
+    </script>
+</body>
+</html>
