@@ -1,3 +1,4 @@
+// fronted/index.js
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -990,7 +991,7 @@
 
             translatePage();
             await initClerk();
-            await loadPublicLinks();
+            setTimeout(() => loadPublicLinks(), 1000);
             updateStats();
         }
 
@@ -1133,7 +1134,7 @@
         // Cargar enlaces públicos
         async function loadPublicLinks() {
             try {
-                const response = await fetch(`${API_BASE}/api/public-links`);
+                const response = await fetch(`${API_BASE}/api/public-links?t=${Date.now()}`);
 
                 if (response.ok) {
                     const links = await response.json();
@@ -1208,7 +1209,7 @@
                     <div class="link-original">${link.longUrl}</div>
                     <div class="link-meta">
                         <span><i class="fas fa-calendar"></i> ${new Date(link.createdAt).toLocaleDateString(currentLang === 'es' ? 'es' : 'en')}</span>
-                        <button class="copy-btn" onclick="copyLink('${link.shortUrl}')" style="padding: 6px 12px; font-size: 0.8rem;">
+                        <button class="copy-btn" onclick="copyLink('${link.shortUrl}', event)" style="padding: 6px 12px; font-size: 0.8rem;">
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>
@@ -1286,11 +1287,11 @@
             copyLink(shortUrl);
         }
 
-        function copyLink(url) {
+        function copyLink(url, e) {
             navigator.clipboard.writeText(url).then(() => {
                 const t = translations[currentLang];
                 // Mostrar feedback visual
-                const btn = event.target.closest('button');
+                const btn = e ? e.target.closest('button') : event.target.closest('button');
                 const originalText = btn.innerHTML;
                 btn.innerHTML = `<i class="fas fa-check"></i> ${t.copied}`;
                 btn.style.background = 'var(--success)';
